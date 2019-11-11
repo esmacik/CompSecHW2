@@ -81,6 +81,14 @@ public class CryptoMultiEchoServer {
                 // initialize with a specific vector instead of a random one
                 cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
 
+                // ------ MY MODIFICATION ------
+                // Make encryption cypher
+                Cipher encryptionCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                encryptionCipher.init(Cipher.ENCRYPT_MODE, secretKey);
+                byte[] encryptIv = encryptionCipher.getIV();
+                objectOutput.writeObject(encryptIv);
+                // ---- END MY MODIFICATION ----
+
                 // keep echoing the strings received until
                 // receiving the string "BYE" which will break
                 // out of the for loop and close the thread
@@ -92,8 +100,17 @@ public class CryptoMultiEchoServer {
                     // reply to the client with an echo of the string
                     // this reply is not encrypted, you need to modify this
                     // by encrypting the reply
-                    out.println("Echo: " + str);
-                    out.flush();
+
+                    // ------ MY MODIFICATION ------
+                    // Encrypt the message
+                    byte[] resendEncryptedByte = encryptionCipher.doFinal(("Encrypted Echo: " + str).getBytes());
+                    // Write object to output
+                    objectOutput.writeObject(resendEncryptedByte);
+                    // ---- END MY MODIFICATION ----
+
+                    //out.println("Echo: " + str);
+                    //out.flush();
+
                     // print the message received from the client
                     System.out.println("Received from session " + id + ": " + str);
                     if (str.trim().equals("BYE")) {

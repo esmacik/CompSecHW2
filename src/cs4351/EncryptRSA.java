@@ -18,7 +18,8 @@ class EncryptRSA {
         File file;
         PublicKey pubKey;
         Cipher cipher;
-        String messageToEncrypt = "snoopy, 6PzxpLPvWp, be1bb31030b87575286e3cc7d97f61a92dc03a72";
+        // String messageToEncrypt = "snoopy, 6PzxpLPvWp, be1bb31030b87575286e3cc7d97f61a92dc03a72";
+        String messageToEncrypt = "Erik Macik, November 9th 2019";
         System.out.println("The plaintext is: " + messageToEncrypt);       
         byte[] encryptedByteArray;
         String encryptedString;

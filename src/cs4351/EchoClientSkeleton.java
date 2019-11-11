@@ -30,6 +30,7 @@ public class EchoClientSkeleton {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
         } catch (IOException e) {
+            e.printStackTrace();
             System.out.println("socket initialization error");
             return;
         }
@@ -50,7 +51,8 @@ public class EchoClientSkeleton {
 
         try {
             // read and send certificate to server
-            File file = new File("client2Certificate.txt");
+            // File file = new File("client2Certificate.txt");
+            File file = new File("certificate.txt");
             Scanner input = new Scanner(file);
             String line;
             while (input.hasNextLine()) {
@@ -104,11 +106,12 @@ public class EchoClientSkeleton {
         byte[] sharedSecret = new byte[16];
         //System.arraycopy(serverRandomBytes, 0, sharedSecret, 0, 8);
         //System.arraycopy(clientRandomBytes, 8, sharedSecret, 8, 8);
+        SecretKeySpec secretKey;
         try {
             // we will use AES encryption, CBC chaining and PCS5 block padding
             cipherEnc = Cipher.getInstance("AES/CBC/PKCS5Padding");            
             // generate an AES key derived from randomBytes array
-            SecretKeySpec secretKey = new SecretKeySpec(sharedSecret, "AES");
+            secretKey = new SecretKeySpec(sharedSecret, "AES");
             cipherEnc.init(Cipher.ENCRYPT_MODE, secretKey);
             byte[] iv = cipherEnc.getIV();
             objectOutput.writeObject(iv);
@@ -118,6 +121,12 @@ public class EchoClientSkeleton {
             return;
         }
         try {
+            // ------ MY MODIFICATION ------
+            byte[] decryptIv = (byte[]) objectInput.readObject();
+            Cipher decryptionCypher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            decryptionCypher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(decryptIv));
+            // ---- END MY MODIFICATION ----
+
             // Encrypted communication
             System.out.println("Starting messages to the server. Type messages, type BYE to end");    
             Scanner userInput = new Scanner(System.in);
@@ -137,11 +146,15 @@ public class EchoClientSkeleton {
                     // Wait for reply from server,
                     encryptedBytes = (byte[]) objectInput.readObject();
                     // will need to decrypt and print the reply to the screen
-                    System.out.println("Encrypted echo received, but not decrypted");
+                    // System.out.println("Encrypted echo received, but not decrypted");
+
+                    // ------ MY MODIFICATION ------
+                    String message = new String(decryptionCypher.doFinal(encryptedBytes));
+                    System.out.println(message);
+                    // ---- END MY MODIFICATION ----
                 }
             }            
-        } catch (IllegalBlockSizeException | BadPaddingException 
-                | IOException | ClassNotFoundException e) {
+        } catch (IllegalBlockSizeException | BadPaddingException | IOException | ClassNotFoundException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException e) {
             System.out.println("error in encrypted communication with server");
         }
     }
